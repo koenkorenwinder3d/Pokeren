@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fiches — pokeravond</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt:#123f33; --felt-deep:#0b2a22; --line:rgba(242,235,220,.14);
+    --bone:#f2ebdc; --dim:rgba(242,235,220,.58);
+    --gold:#e0ac46; --crimson:#e0503f; --ok:#69b58a;
+    --pad:clamp(14px,3.5vw,24px);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(120% 80% at 50% 0%,#185043 0%,var(--felt) 45%,var(--felt-deep) 100%);
+    background-attachment:fixed;color:var(--bone);
+    font-family:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;line-height:1.35;min-height:100dvh;-webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:var(--pad) var(--pad) 28px}
+  .num{font-family:'Archivo Narrow','Archivo',sans-serif;font-variant-numeric:tabular-nums}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .btn{background:var(--bone);color:#14352c;border-radius:11px;padding:15px 20px;font-weight:700;font-size:1.02rem}
+  .btn.ghost{background:transparent;color:var(--bone);border:1px solid var(--line);font-weight:600}
+  .btn.gold{background:var(--gold);color:#33240b}
+  .btn:disabled{opacity:.32;cursor:not-allowed}
+  input[type=text]{
+    background:rgba(0,0,0,.22);border:1px solid var(--line);color:var(--bone);
+    border-radius:11px;padding:15px 16px;font-size:1.05rem;width:100%;
+  }
+  input::placeholder{color:rgba(242,235,220,.4)}
+
+  .lead h1{font-family:'Archivo Narrow','Archivo',sans-serif;font-size:clamp(2.3rem,9vw,3.6rem);
+    font-weight:700;line-height:.95;margin:.15em 0 .12em}
+  .lead p{color:var(--dim);margin:0 0 1.5em;max-width:44ch}
+  .code{display:inline-block;font-family:'Archivo Narrow','Archivo',sans-serif;font-size:1.4rem;
+    font-weight:700;letter-spacing:.22em;color:var(--gold);background:rgba(0,0,0,.2);
+    border:1px solid var(--line);border-radius:10px;padding:6px 8px 6px 16px}
+  .stack-v{display:flex;flex-direction:column;gap:10px;margin:18px 0}
+  .seats{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+  .seats button{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:99px;
+    padding:9px 15px;font-weight:600}
+  .tiny{color:var(--dim);font-size:.88rem;margin:8px 0 0}
+
+  .status{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:.88rem;margin-bottom:6px}
+  .dot{width:8px;height:8px;border-radius:99px;background:var(--gold);flex:0 0 auto}
+  .dot.on{background:var(--ok)} .dot.off{background:var(--crimson)}
+
+  .strip{display:flex;gap:10px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:none}
+  .strip::-webkit-scrollbar{display:none}
+  .seat{flex:0 0 auto;width:74px;text-align:center}
+  .av{position:relative;width:60px;height:60px;margin:0 auto 6px;border-radius:99px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Archivo Narrow','Archivo',sans-serif;font-size:1.7rem;font-weight:700;
+    background:rgba(0,0,0,.25);border:2px solid var(--seat,#7d8c85);color:var(--bone)}
+  .av .tick{position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;border-radius:99px;
+    background:var(--ok);color:#0b2a22;font-size:.95rem;font-weight:800;
+    display:flex;align-items:center;justify-content:center;border:2px solid var(--felt-deep)}
+  .seat.folded{opacity:.38}
+  .seat.folded .av .tick{background:rgba(242,235,220,.5)}
+  .seat.me .av{border-width:3px;box-shadow:0 0 0 3px rgba(224,172,70,.25)}
+  .seat.away{opacity:.45}
+  .seat .nm{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dim)}
+  .seat .amt{font-family:'Archivo Narrow','Archivo',sans-serif;font-variant-numeric:tabular-nums;
+    font-size:1rem;font-weight:700;color:var(--crimson);min-height:1.25em}
+  .seat .amt.zero{color:rgba(242,235,220,.28)}
+
+  .pot{text-align:center;padding:14px 0 10px;border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);margin-bottom:16px}
+  .pot .cap{color:var(--dim);font-size:.92rem}
+  .pot .amt{font-family:'Archivo Narrow','Archivo',sans-serif;font-variant-numeric:tabular-nums;
+    font-size:clamp(3rem,14vw,5rem);font-weight:700;color:var(--gold);line-height:1}
+  .pot .sub{color:var(--dim);font-size:.92rem;margin-top:4px}
+  .pot .sub b{color:var(--bone);font-weight:700}
+
+  .streets{display:flex;gap:6px;justify-content:center;margin:0 0 12px}
+  .st-pill{flex:1;text-align:center;font-size:.82rem;font-weight:600;color:var(--dim);
+    padding:7px 2px;border-radius:8px;border:1px solid transparent;background:rgba(0,0,0,.18)}
+  .st-pill.past{color:rgba(242,235,220,.35)}
+  .st-pill.now{color:#33240b;background:var(--gold);font-weight:700}
+  .lbl{color:var(--dim);font-size:.88rem;margin:0 0 6px;text-align:center}
+  .lbl.mid{margin:10px 0 0}
+  .commit .btn small{font-weight:600;opacity:.75;font-size:.82rem}
+  .mine{background:rgba(0,0,0,.24);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .mine .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+  .mine .nm{font-size:1.25rem;font-weight:700}
+  .mine .st{color:var(--dim);font-size:.98rem}
+  .mine .st b{color:var(--bone);font-weight:700;font-size:1.15rem;font-variant-numeric:tabular-nums}
+  .stepper{display:flex;align-items:center;gap:12px;justify-content:center;margin:4px 0 12px}
+  .stepper button{width:58px;height:58px;border-radius:99px;background:rgba(242,235,220,.12);
+    border:1px solid var(--line);font-size:1.7rem;font-weight:700;line-height:1}
+  .stepper .val{font-family:'Archivo Narrow','Archivo',sans-serif;font-variant-numeric:tabular-nums;
+    font-size:clamp(2.6rem,11vw,3.4rem);font-weight:700;min-width:4.6ch;text-align:center;line-height:1}
+  .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+  .quick button{background:rgba(242,235,220,.1);border:1px solid var(--line);border-radius:10px;
+    padding:12px 2px;font-weight:600;font-size:.95rem;font-variant-numeric:tabular-nums}
+  .quick button:active{background:var(--bone);color:#14352c}
+  .quick button:disabled{opacity:.3}
+  .commit{display:flex;gap:8px}
+  .commit .btn{flex:1;padding:18px 10px;font-size:1.1rem}
+  .commit .fold{flex:0 0 32%;background:rgba(224,80,63,.16);border:1px solid rgba(224,80,63,.45);
+    color:var(--bone);font-weight:700;border-radius:11px}
+  .done{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:rgba(105,181,138,.14);border:1px solid rgba(105,181,138,.4);
+    border-radius:11px;padding:14px 16px;font-weight:600}
+  .done .undo{color:var(--dim);text-decoration:underline;font-size:.92rem;font-weight:600}
+  .tools{display:flex;gap:8px;margin-top:14px}
+  .tools .btn{flex:1;padding:13px 8px;font-size:.95rem}
+  .tools .btn.icon{flex:0 0 auto;padding:13px 16px}
+  .banner{background:rgba(224,172,70,.16);border:1px solid rgba(224,172,70,.45);border-radius:11px;
+    padding:12px 14px;margin-bottom:12px;font-weight:600;text-align:center}
+
+  .veil{position:fixed;inset:0;z-index:40;background:rgba(6,22,18,.84);backdrop-filter:blur(4px);
+    display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+  .sheet{width:100%;max-width:480px;background:#14382f;border:1px solid var(--line);
+    border-radius:18px;padding:20px;max-height:92dvh;overflow:auto}
+  .sheet h2{font-family:'Archivo Narrow','Archivo',sans-serif;font-size:1.8rem;margin:0 0 4px}
+  .sheet .hint{color:var(--dim);margin:0 0 16px;font-size:.93rem}
+  .pick{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .pick button{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:15px 16px;
+    border-radius:11px;background:rgba(0,0,0,.2);border:1px solid var(--line);font-size:1.05rem;font-weight:600}
+  .pick button[aria-pressed=true]{background:var(--gold);color:#33240b;border-color:var(--gold)}
+  .pick .sm{font-size:.88rem;opacity:.7;font-variant-numeric:tabular-nums}
+  .rowbtns{display:flex;gap:8px}
+  .rowbtns .btn{flex:1}
+  table.tally{width:100%;border-collapse:collapse;margin-bottom:14px}
+  table.tally th{text-align:left;font-size:.82rem;color:var(--dim);font-weight:600;padding:0 0 6px}
+  table.tally td{padding:9px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+  table.tally td.nm{font-weight:600}
+  table.tally td.r{text-align:right}
+  .up{color:var(--ok);font-weight:700} .down{color:var(--crimson);font-weight:700}
+  .settle{list-style:none;margin:0 0 16px;padding:0}
+  .settle li{padding:9px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="lead"><h1>Fiches</h1><p>Verbinding maken met de tafel…</p></div>
+</div>
+<div id="modal"></div>
+
+<script>
+(function(){
+"use strict";
+
+var CHIP = 10;      /* cent per fiche */
+var BUYIN = 50;     /* fiches per inkoop = 5 euro */
+var BROKER = 'wss://broker.hivemq.com:8884/mqtt';
+var CDN = [
+  'https://unpkg.com/mqtt@5.15.2/dist/mqtt.min.js',
+  'https://cdn.jsdelivr.net/npm/mqtt@5.15.2/dist/mqtt.min.js'
+];
+var HUE = ['#e0503f','#4a90c4','#e0ac46','#69b58a','#b07ad4','#e88fb0','#5fc2c0','#d4733a'];
+
+var STREETS = ['Pre-flop','Flop','Turn','River'];
+
+var G = {
+  room:'', me:null, phase:'join', conn:'wacht',
+  players:{}, lastCommit:0, raising:false, raiseTo:0,
+  hand:1, street:0, seen:{}, copied:false
+};
+var modal = null, client = null, base = '';
+
+function eur(ch){ return '\u20AC\u00A0' + ((ch*CHIP)/100).toFixed(2).replace('.',','); }
+function esc(s){ return String(s).replace(/[&<>"']/g,function(m){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+function rid(n){
+  var a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s='';
+  for(var i=0;i<n;i++) s+=a.charAt(Math.floor(Math.random()*a.length));
+  return s;
+}
+function list(){
+  var out=[], k;
+  for(k in G.players) if(G.players.hasOwnProperty(k)) out.push(G.players[k]);
+  out.sort(function(a,b){ return (a.joined||0)-(b.joined||0); });
+  return out;
+}
+function me(){ return G.players[G.me] || null; }
+function potTotal(){ return list().reduce(function(t,p){ return t+(p.inPot||0); },0); }
+function maxBet(){ return list().reduce(function(m,p){ return p.folded?m:Math.max(m,p.bet||0); },0); }
+function active(){ return list().filter(function(p){ return !p.folded; }); }
+function settled(q){
+  if(q.folded) return true;
+  if(!q.done) return false;
+  return q.chips===0 || q.bet >= maxBet();
+}
+function allSettled(){
+  var a = active();
+  if(!a.length) return false;
+  for(var i=0;i<a.length;i++) if(!settled(a[i])) return false;
+  return true;
+}
+/* na een verhoging van iemand anders moet ik opnieuw aan zet */
+function syncDone(){
+  var p = me();
+  if(!p || p.folded || p.chips===0) return;
+  if(p.done && p.bet < maxBet()){ p.done = false; publishMe(); }
+}
+function hueOf(p){ return HUE[(p.seat||0)%HUE.length]; }
+function each(fn){ var l=list(); for(var i=0;i<l.length;i++) fn(l[i]); }
+
+/* ---------- verbinding ---------- */
+function loadLib(i){
+  i = i||0;
+  if(i>=CDN.length){ G.conn='geen-lib'; render(); return; }
+  var s = document.createElement('script');
+  s.src = CDN[i];
+  s.onload = function(){ connect(); };
+  s.onerror = function(){ loadLib(i+1); };
+  document.head.appendChild(s);
+}
+function connect(){
+  base = 'pokerfiches/v2/' + G.room;
+  try{
+    client = window.mqtt.connect(BROKER, {
+      clientId: 'pf_' + rid(10) + Date.now().toString(36).slice(-4),
+      keepalive: 30, clean: true, reconnectPeriod: 3000, connectTimeout: 12000
+    });
+  }catch(err){ G.conn='fout'; render(); return; }
+
+  client.on('connect', function(){
+    G.conn='ok';
+    client.subscribe(base+'/p/+', {qos:0});
+    client.subscribe(base+'/ev', {qos:0});
+    if(G.me) publishMe();
+    render();
+  });
+  client.on('reconnect', function(){ if(G.conn!=='ok'){ G.conn='bezig'; render(); } });
+  client.on('close', function(){ if(G.conn==='ok'){ G.conn='weg'; render(); } });
+  client.on('error', function(){ G.conn='fout'; render(); });
+  client.on('message', onMessage);
+}
+function publishMe(){
+  var p = me();
+  if(!p || !client || G.conn!=='ok') return;
+  p.ts = Date.now(); p.hand = G.hand; p.street = G.street;
+  client.publish(base+'/p/'+p.id, JSON.stringify(p), {retain:true, qos:0});
+}
+function sendEvent(ev){
+  ev.eid = rid(8);
+  G.seen[ev.eid] = 1;
+  applyEvent(ev);
+  if(client && G.conn==='ok') client.publish(base+'/ev', JSON.stringify(ev), {qos:0});
+}
+function onMessage(topic, payload){
+  var txt = (payload && payload.toString) ? payload.toString() : '';
+  if(topic === base+'/ev'){
+    var ev = null;
+    try{ ev = JSON.parse(txt); }catch(e){ return; }
+    if(!ev || !ev.eid || G.seen[ev.eid]) return;
+    G.seen[ev.eid] = 1;
+    applyEvent(ev); render(); return;
+  }
+  var parts = topic.split('/p/');
+  var id = parts[1];
+  if(!id) return;
+  if(!txt){ if(id!==G.me){ delete G.players[id]; render(); } return; }
+  var rec = null;
+  try{ rec = JSON.parse(txt); }catch(e){ return; }
+  if(!rec || !rec.id) return;
+  if((rec.hand||1) > G.hand){ G.hand = rec.hand; G.street = rec.street||0; }
+  else if((rec.hand||1) === G.hand && (rec.street||0) > G.street){ G.street = rec.street; }
+  if(rec.id === G.me) return;
+  G.players[rec.id] = rec;
+  syncDone();
+  render();
+}
+function applyEvent(ev){
+  var p = me();
+  if(ev.type==='street'){
+    if(ev.hand !== G.hand || ev.street <= G.street) return;
+    G.street = ev.street;
+    each(function(q){ q.bet=0; q.done=false; q.street=ev.street; });
+    G.raising=false; G.lastCommit=0;
+    publishMe();
+  }else if(ev.type==='pay'){
+    if(ev.hand !== G.hand) return;
+    if(p && ev.amounts && ev.amounts[p.id]) p.chips += ev.amounts[p.id];
+    G.hand = ev.hand+1; G.street = 0;
+    each(function(q){ q.bet=0; q.inPot=0; q.done=false; q.folded=false; q.hand=G.hand; q.street=0; });
+    G.raising=false; G.lastCommit=0;
+    publishMe();
+  }
+}
+
+/* ---------- acties ---------- */
+function join(name, claimId){
+  name = (name||'').trim().slice(0,14);
+  if(!name) return;
+  var l = list(), found = null, i;
+  for(i=0;i<l.length;i++){
+    if(l[i].id===claimId || l[i].name.toLowerCase()===name.toLowerCase()) found = l[i];
+  }
+  if(found){
+    G.me = found.id; found.name = name;
+  }else{
+    var id = rid(8), seats = [], seat = 0;
+    for(i=0;i<l.length;i++) seats.push(l[i].seat);
+    while(seats.indexOf(seat)>-1) seat++;
+    G.players[id] = {id:id, name:name, seat:seat, chips:BUYIN, bet:0, inPot:0, done:false,
+      folded:false, buyins:1, hand:G.hand, street:G.street, joined:Date.now(), ts:Date.now()};
+    G.me = id;
+  }
+  G.phase='table'; publishMe(); render();
+}
+/* hoeveel moet ik bijleggen om mee te gaan */
+function toCall(){
+  var p = me(); if(!p) return 0;
+  return Math.max(0, Math.min(maxBet()-p.bet, p.chips));
+}
+/* kleinste bedrag waarnaar je mag verhogen (totaal deze straat) */
+function minRaise(){
+  var p = me(), hi = maxBet();
+  var want = hi>0 ? hi*2 : 1;
+  return Math.min(want, p.bet + p.chips);
+}
+function put(amt){
+  var p = me();
+  amt = Math.max(0, Math.min(amt, p.chips));
+  p.chips -= amt; p.bet += amt; p.inPot += amt; p.done = true;
+  G.lastCommit = amt; G.raising = false;
+  publishMe(); render();
+}
+function doCheck(){
+  var p = me(); if(!p || p.folded) return;
+  p.done = true; G.lastCommit = 0; G.raising = false;
+  publishMe(); render();
+}
+function doCall(){
+  var n = toCall();
+  if(n<=0){ doCheck(); return; }
+  put(n);
+}
+function openRaise(){
+  var p = me(); if(!p) return;
+  G.raising = true;
+  G.raiseTo = minRaise();
+  render();
+}
+function setRaise(to){
+  var p = me(); if(!p) return;
+  G.raiseTo = Math.max(minRaise(), Math.min(p.bet + p.chips, to));
+  render();
+}
+function doRaise(){
+  var p = me(); if(!p) return;
+  put(G.raiseTo - p.bet);
+}
+function takeBack(){
+  var p = me(); if(!p || !G.lastCommit) return;
+  p.chips += G.lastCommit; p.bet -= G.lastCommit; p.inPot -= G.lastCommit;
+  if(p.bet<=0) p.done = false;
+  G.lastCommit = 0;
+  publishMe(); render();
+}
+function foldMe(){
+  var p = me(); if(!p) return;
+  p.folded = true; p.done = true; G.raising = false;
+  publishMe(); render();
+}
+function nextStreet(){
+  if(G.street>=3) return;
+  sendEvent({type:'street', hand:G.hand, street:G.street+1});
+  render();
+}
+function payout(ids){
+  var pot = potTotal();
+  if(!ids.length || !pot) return;
+  var share = Math.floor(pot/ids.length), rest = pot - share*ids.length, amounts = {};
+  ids.forEach(function(id,i){ amounts[id] = share + (i<rest?1:0); });
+  sendEvent({type:'pay', hand:G.hand, amounts:amounts});
+  modal = null; render();
+}
+function rebuy(){
+  var p = me(); if(!p) return;
+  p.chips += BUYIN; p.buyins++;
+  publishMe(); render();
+}
+function invite(){
+  var url = location.origin + location.pathname + '#' + G.room;
+  var flash = function(){ G.copied=true; render(); setTimeout(function(){ G.copied=false; render(); },2500); };
+  if(navigator.share){
+    navigator.share({title:'Pokerfiches', text:'Doe mee aan tafel '+G.room, url:url}).catch(function(){});
+    return;
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(flash, function(){ window.prompt('Kopieer de link:', url); });
+  }else{
+    window.prompt('Kopieer de link:', url);
+  }
+}
+
+/* ---------- render ---------- */
+function render(){
+  document.getElementById('app').innerHTML = (G.phase==='table' && me()) ? tableView() : joinView();
+  document.getElementById('modal').innerHTML = modal ? modalView() : '';
+}
+function connLine(){
+  var m = {
+    ok:['on','verbonden met tafel '+G.room],
+    bezig:['','opnieuw verbinden\u2026'],
+    weg:['off','verbinding kwijt \u2014 probeert opnieuw'],
+    fout:['off','verbinding mislukt'],
+    'geen-lib':['off','kon de verbindingsmodule niet laden'],
+    wacht:['','verbinden\u2026']
+  };
+  var s = m[G.conn] || m.wacht;
+  return '<div class="status"><span class="dot '+s[0]+'"></span><span>'+s[1]+'</span></div>';
+}
+function joinView(){
+  var l = list();
+  var seats = l.length
+    ? '<p class="tiny">Al aan tafel \u2014 tik je eigen naam als je opnieuw inlogt:</p><div class="seats">'+
+      l.map(function(p){ return '<button data-act="claim" data-id="'+p.id+'">'+esc(p.name)+'</button>'; }).join('')+
+      '</div>'
+    : '';
+  var warn = (G.conn==='fout'||G.conn==='geen-lib')
+    ? '<div class="banner">Geen verbinding. Check je internet en herlaad de pagina.</div>' : '';
+  return '<div class="lead"><h1>Neem plaats</h1>'+
+    '<p>Vul je naam in en je zit aan tafel '+G.room+'. Je begint met '+eur(BUYIN)+
+    ' aan fiches, \u00e9\u00e9n fiche is 10 cent.</p></div>'+
+    connLine()+warn+
+    '<div class="stack-v">'+
+      '<input type="text" data-input="name" placeholder="Je naam" autocomplete="off" enterkeyhint="go" maxlength="14">'+
+      '<button class="btn gold" data-act="join">Doe mee</button>'+
+    '</div>'+ seats +
+    '<p class="tiny" style="margin-top:22px">Tafelcode <span class="code">'+G.room+'</span></p>'+
+    '<div class="stack-v"><button class="btn ghost" data-act="invite">'+
+      (G.copied?'Link gekopieerd':'Deel de link met je vrienden')+'</button></div>';
+}
+function tableView(){
+  var p = me(), hi = maxBet(), pot = potTotal(), done = allSettled(), now = Date.now();
+  var alone = active().length===1 && list().length>1;
+
+  var strip = list().map(function(q){
+    var away = (now - (q.ts||0) > 90000) && q.id!==G.me;
+    var cls = 'seat'+(q.folded?' folded':'')+(q.id===G.me?' me':'')+(away?' away':'');
+    var tick = settled(q) ? '<span class="tick">'+(q.folded?'\u2715':'\u2713')+'</span>' : '';
+    return '<div class="'+cls+'" style="--seat:'+hueOf(q)+'">'+
+      '<div class="av">'+esc(q.name.charAt(0).toUpperCase())+tick+'</div>'+
+      '<div class="amt'+(q.bet?'':' zero')+'">'+(q.bet?eur(q.bet):'\u2014')+'</div>'+
+      '<div class="nm">'+esc(q.name)+'</div></div>';
+  }).join('');
+
+  var streets = STREETS.map(function(nm,i){
+    return '<span class="st-pill'+(i===G.street?' now':'')+(i<G.street?' past':'')+'">'+nm+'</span>';
+  }).join('');
+
+  var need = toCall(), panel;
+
+  if(p.folded){
+    panel = '<div class="done"><span>Je bent uit deze hand</span></div>';
+  }else if(p.chips===0){
+    panel = '<div class="done"><span>All-in met '+eur(p.bet)+'</span></div>';
+  }else if(G.raising){
+    var extra = G.raiseTo - p.bet;
+    panel =
+      '<p class="lbl">Verhogen naar (jouw totaal deze straat)</p>'+
+      '<div class="stepper">'+
+        '<button data-act="rstep" data-n="-1" aria-label="Minder">\u2212</button>'+
+        '<span class="val num">'+eur(G.raiseTo)+'</span>'+
+        '<button data-act="rstep" data-n="1" aria-label="Meer">+</button>'+
+      '</div>'+
+      '<div class="quick">'+
+        '<button data-act="rstep" data-n="5">+ 0,50</button>'+
+        '<button data-act="rstep" data-n="10">+ 1,00</button>'+
+        '<button data-act="rstep" data-n="25">+ 2,50</button>'+
+        '<button data-act="rallin">alles</button>'+
+      '</div>'+
+      '<div class="commit">'+
+        '<button class="btn gold" data-act="doraise">Verhoog naar '+eur(G.raiseTo)+
+          ' <small>('+eur(extra)+' erbij)</small></button>'+
+        '<button class="fold" data-act="cancelraise">Terug</button>'+
+      '</div>';
+  }else if(settled(p)){
+    panel = '<div class="done"><span>'+(p.bet?'Ingezet: '+eur(p.bet):'Gecheckt')+'</span>'+
+      (G.lastCommit?'<button class="undo" data-act="takeback">terugnemen</button>':'')+'</div>'+
+      '<div class="commit" style="margin-top:10px">'+
+        '<button class="btn ghost" data-act="raise">Verhoog alsnog</button>'+
+        '<button class="fold" data-act="fold">Pas</button>'+
+      '</div>';
+  }else{
+    panel =
+      '<div class="commit">'+
+        '<button class="btn gold" data-act="call">'+
+          (need ? 'Call '+eur(need) : 'Check')+'</button>'+
+        '<button class="btn ghost" data-act="raise">'+(hi?'Raise':'Inzet openen')+'</button>'+
+        '<button class="fold" data-act="fold">Pas</button>'+
+      '</div>'+
+      (need ? '<p class="lbl mid">je hebt '+eur(p.bet)+' in deze straat, hoogste is '+eur(hi)+'</p>' : '');
+  }
+
+  var nextLbl = ['Naar de flop','Naar de turn','Naar de river'][G.street];
+
+  return connLine()+
+    '<div class="strip">'+strip+'</div>'+
+    '<div class="streets">'+streets+'</div>'+
+    '<div class="pot"><div class="cap">In de pot</div>'+
+      '<div class="amt">'+eur(pot)+'</div>'+
+      '<div class="sub">'+pot+' fiches'+(hi?' &nbsp;\u00b7&nbsp; hoogste inzet <b>'+eur(hi)+'</b>':'')+'</div></div>'+
+    (alone ? '<div class="banner">Iedereen is gepast \u2014 betaal de pot uit</div>'
+           : (done ? '<div class="banner">'+(G.street<3 ? 'Inzetten gelijk \u2014 deel de volgende kaarten'
+                                                       : 'Inzetten gelijk \u2014 showdown')+'</div>' : ''))+
+    '<div class="mine"><div class="hd"><span class="nm">'+esc(p.name)+'</span>'+
+      '<span class="st">stack <b>'+eur(p.chips)+'</b></span></div>'+panel+'</div>'+
+    '<div class="tools">'+
+      (G.street<3
+        ? '<button class="btn ghost" data-act="street" '+((done&&!alone)?'':'disabled')+'>'+nextLbl+'</button>'
+        : '')+
+      '<button class="btn gold" data-act="winner" '+(pot&&(done||alone)?'':'disabled')+'>Pot uitbetalen</button>'+
+      '<button class="btn ghost icon" data-act="menu" aria-label="Meer">\u22ee</button>'+
+    '</div>';
+}
+function modalView(){
+  if(modal.type==='winner') return winnerSheet();
+  if(modal.type==='menu') return menuSheet();
+  if(modal.type==='tally') return tallySheet();
+  return '';
+}
+function winnerSheet(){
+  var rows = list().map(function(p){
+    var on = modal.picked.indexOf(p.id)>-1;
+    return '<button data-act="pick" data-id="'+p.id+'" aria-pressed="'+on+'">'+
+      '<span>'+esc(p.name)+'</span><span class="sm">'+eur(p.chips)+(p.folded?' \u00b7 gepast':'')+'</span></button>';
+  }).join('');
+  var n = modal.picked.length;
+  return '<div class="veil" data-act="close"><div class="sheet" data-stop>'+
+    '<h2>Wie wint '+eur(potTotal())+'?</h2>'+
+    '<p class="hint">Kies meerdere spelers om te delen. Iedereen ziet de uitslag meteen.</p>'+
+    '<div class="pick">'+rows+'</div>'+
+    '<div class="rowbtns"><button class="btn ghost" data-act="close">Terug</button>'+
+    '<button class="btn gold" data-act="pay" '+(n?'':'disabled')+'>'+
+    (n>1?'Verdeel over '+n:'Betaal uit')+'</button></div></div></div>';
+}
+function menuSheet(){
+  var p = me();
+  return '<div class="veil" data-act="close"><div class="sheet" data-stop>'+
+    '<h2>Tafel '+G.room+'</h2>'+
+    '<p class="hint">Hand '+G.hand+' \u00b7 '+STREETS[G.street]+'. Jij hebt '+p.buyins+'\u00d7 ingekocht.</p>'+
+    '<div class="stack-v">'+
+      '<button class="btn ghost" data-act="invite">'+(G.copied?'Link gekopieerd':'Deel de link')+'</button>'+
+      '<button class="btn ghost" data-act="rebuy">Opnieuw inkopen (+ '+eur(BUYIN)+')</button>'+
+      '<button class="btn" data-act="tally">Eindafrekening</button>'+
+    '</div>'+
+    '<div class="rowbtns" style="margin-top:14px">'+
+      '<button class="btn ghost" data-act="close">Terug</button></div></div></div>';
+}
+function tallySheet(){
+  var open = potTotal()>0;
+  var rows = list().map(function(p){
+    var net = p.chips*CHIP - p.buyins*BUYIN*CHIP;
+    var cls = net>0?'up':(net<0?'down':'');
+    return '<tr><td class="nm">'+esc(p.name)+'</td><td class="r">'+eur(p.chips)+'</td>'+
+      '<td class="r '+cls+'">'+(net>0?'+':'')+(net/100).toFixed(2).replace('.',',')+'</td></tr>';
+  }).join('');
+  var moves = settle().map(function(m){
+    return '<li>'+esc(m.from)+' betaalt '+esc(m.to)+' <b>\u20ac\u00a0'+
+      (m.amt/100).toFixed(2).replace('.',',')+'</b></li>';
+  }).join('');
+  return '<div class="veil" data-act="close"><div class="sheet" data-stop>'+
+    '<h2>Eindafrekening</h2>'+
+    (open?'<p class="hint">Er ligt nog '+eur(potTotal())+' in de pot. Betaal die eerst uit.</p>'
+         :'<p class="hint">Stack min inkoop, en wie wie betaalt.</p>')+
+    '<table class="tally"><tr><th>Speler</th><th style="text-align:right">Stack</th>'+
+    '<th style="text-align:right">Saldo</th></tr>'+rows+'</table>'+
+    (moves?'<ul class="settle">'+moves+'</ul>':'<p class="hint">Iedereen speelt quitte.</p>')+
+    '<div class="rowbtns"><button class="btn ghost" data-act="close">Terug</button></div></div></div>';
+}
+function settle(){
+  var d = list().map(function(p){ return {name:p.name, v:p.chips*CHIP - p.buyins*BUYIN*CHIP}; });
+  var owe = d.filter(function(x){return x.v<-0.5;}).map(function(x){return {name:x.name,v:-x.v};});
+  var get = d.filter(function(x){return x.v>0.5;}).map(function(x){return {name:x.name,v:x.v};});
+  owe.sort(function(a,b){return b.v-a.v;}); get.sort(function(a,b){return b.v-a.v;});
+  var out=[], i=0, j=0;
+  while(i<owe.length && j<get.length){
+    var amt = Math.min(owe[i].v, get[j].v);
+    if(amt>0) out.push({from:owe[i].name, to:get[j].name, amt:amt});
+    owe[i].v-=amt; get[j].v-=amt;
+    if(owe[i].v<=0.5) i++;
+    if(get[j].v<=0.5) j++;
+  }
+  return out;
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', function(e){
+  var t = e.target.closest ? e.target.closest('[data-act]') : null;
+  if(!t) return;
+  var act = t.getAttribute('data-act');
+  if(act==='close' && e.target.closest('[data-stop]') && !e.target.closest('button[data-act=close]')) return;
+  var id = t.getAttribute('data-id');
+  var p = me();
+
+  if(act==='join'){
+    var f = document.querySelector('[data-input=name]');
+    join(f ? f.value : ''); return;
+  }
+  if(act==='claim'){
+    var g = document.querySelector('[data-input=name]');
+    var nm = (g && g.value.trim()) || (G.players[id] ? G.players[id].name : '');
+    join(nm, id); return;
+  }
+  if(act==='invite'){ invite(); return; }
+  if(act==='close'){ modal=null; render(); return; }
+  if(act==='menu'){ modal={type:'menu'}; render(); return; }
+  if(act==='tally'){ modal={type:'tally'}; render(); return; }
+  if(act==='winner'){ modal={type:'winner',picked:[]}; render(); return; }
+  if(act==='pick'){
+    var k = modal.picked.indexOf(id);
+    if(k>-1) modal.picked.splice(k,1); else modal.picked.push(id);
+    render(); return;
+  }
+  if(act==='pay'){ payout(modal.picked); return; }
+  if(!p) return;
+  if(act==='call'){ doCall(); return; }
+  if(act==='raise'){ openRaise(); return; }
+  if(act==='cancelraise'){ G.raising=false; render(); return; }
+  if(act==='rstep'){ setRaise(G.raiseTo + parseInt(t.getAttribute('data-n'),10)); return; }
+  if(act==='rallin'){ setRaise(p.bet + p.chips); return; }
+  if(act==='doraise'){ doRaise(); return; }
+  if(act==='takeback'){ takeBack(); return; }
+  if(act==='fold'){ foldMe(); return; }
+  if(act==='street'){ nextStreet(); return; }
+  if(act==='rebuy'){ rebuy(); return; }
+});
+document.addEventListener('keydown', function(e){
+  var el = e.target;
+  if(e.key==='Enter' && el && el.getAttribute && el.getAttribute('data-input')==='name'){
+    join(el.value);
+  }
+  if(e.key==='Escape' && modal){ modal=null; render(); }
+});
+
+setInterval(function(){ if(G.phase==='table') publishMe(); }, 20000);
+setInterval(function(){ if(G.phase==='table') render(); }, 30000);
+
+G.room = (location.hash||'').replace('#','').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+if(!G.room){
+  G.room = rid(4);
+  try{ history.replaceState(null,'','#'+G.room); }catch(e){ location.hash = G.room; }
+}
+render();
+loadLib();
+
+})();
+</script>
+</body>
+</html>
